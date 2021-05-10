@@ -16,6 +16,6 @@ Examples:
 
 ### TODO:
 
-- [] Docker
-- [] Code comments
-- [] Documentation for self-host deploy
+- [ ] Docker
+- [ ] Code comments
+- [ ] Documentation for self-host deploy
