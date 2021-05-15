@@ -9,7 +9,7 @@
 (define tg-update-limit 1)
 (define tg-timeout 60)
 
-(define translate-base-url "https://libretranslate.com")
+(define translate-base-url "https://translate.googleapis.com/translate_a/single")
 
 
 (define (port->jsexpr port)
@@ -58,13 +58,12 @@
     ([source (hash-ref parsed-message 'source)]
      [target (hash-ref parsed-message 'target)]
      [word (hash-ref parsed-message 'word)]
-     [answer (port->jsexpr (post-pure-port
-        (string->url (format "~a/translate" translate-base-url))
-        (jsexpr->bytes
-          (hasheq 'source source 'target target 'q word))
-          (list "Content-type: application/json")))])
-    (displayln answer)
-    (hash-ref answer 'translatedText)))
+     [answer-list (port->jsexpr (get-pure-port
+        (string->url
+          (format "~a?sl=~a&tl=~a&q=~a&client=gtx&dt=t"
+            translate-base-url source target word))
+          (list "Content-type: Application/json")))])
+    (first (first (first answer-list)))))
 
 
 (define (normalize-lang-item lst-item)
@@ -74,28 +73,25 @@
 (define (get-languages)
   (let
     ([answer-list (port->jsexpr (get-pure-port
-        (string->url (format "~a/languages" translate-base-url))
-        (list "Content-type: application/json")))])
+        (string->url "https://libretranslate.com/languages")
+        (list "Accept: application/json")))])
     (format "```~a```" (string-join (map normalize-lang-item answer-list) "\n"))))
 
 
 (define (create-message parsed-message)
   (cond [(hash? parsed-message) (translate parsed-message)]
-        [(list? parsed-message) (get-languages)]
-        [(null? parsed-message) (help-message)]))
+        [(null? parsed-message) help-message]
+        [(list? parsed-message) (get-languages)]))
 
 
 (define (listen #:last-update-id (last-update-id null))
   (let ((tg-updates (get-updates #:last-update-id last-update-id)))
-    (displayln tg-updates)
     (if (and (hash-ref tg-updates 'ok) (not (null? (hash-ref tg-updates 'result))))
       (let* ([message (hash-ref (first (hash-ref tg-updates 'result)) 'message)]
              [text (hash-ref message 'text)]
              [update-id (hash-ref (first (hash-ref tg-updates 'result)) 'update_id)]
              [chat-id (hash-ref (hash-ref message 'chat) 'id)]
              [message (create-message (parse-message text))])
-        ; (displayln text)
-        ; (displayln (create-message (parse-message text)))
         (send-message #:chat-id chat-id #:text message)
         (listen #:last-update-id update-id))
       (if (hash-ref tg-updates 'ok)
