@@ -87,7 +87,10 @@
 (define (listen #:last-update-id (last-update-id null))
   (let ((tg-updates (get-updates #:last-update-id last-update-id)))
     (if (and (hash-ref tg-updates 'ok) (not (null? (hash-ref tg-updates 'result))))
-      (let* ([message (hash-ref (first (hash-ref tg-updates 'result)) 'message)]
+      (let* ([result (first (hash-ref tg-updates 'result))]
+             [message (if (hash-has-key? result 'message)
+                        (hash-ref result 'message)
+                        (hash-ref result 'edited_message))]
              [text (hash-ref message 'text)]
              [update-id (hash-ref (first (hash-ref tg-updates 'result)) 'update_id)]
              [chat-id (hash-ref (hash-ref message 'chat) 'id)]
