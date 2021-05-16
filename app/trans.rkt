@@ -37,10 +37,12 @@
 
 
 (define help-message
-  (format "~a~n~a~n~a~n~a~n~a~n"
-    "Using:"
-    "`--source -s <language code>`"
-    "`--target -t <language code>`"
+  (format "~a~n~a~n~a~n~a~n~a~n~a~n~a~n"
+    "To see all available languages:"
+    "`/languages`"
+    "Using translator:"
+    "`-s(source) <language code>`"
+    "`-t(target) <language code>`"
     "Example:"
     "`-s ru -t en Привет`"))
 
@@ -72,9 +74,7 @@
 
 (define (get-languages)
   (let
-    ([answer-list (port->jsexpr (get-pure-port
-        (string->url "https://libretranslate.com/languages")
-        (list "Accept: application/json")))])
+    ([answer-list (call-with-input-file "langs.json" read-json)])
     (format "```~a```" (string-join (map normalize-lang-item answer-list) "\n"))))
 
 
