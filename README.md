@@ -1,5 +1,7 @@
 # translate-bot
 
+Source code for https://t.me/libre_translator_bot
+
 ## Deploy
 
 - Rename you_need.env to .env
